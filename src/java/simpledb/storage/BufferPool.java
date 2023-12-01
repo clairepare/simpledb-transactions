@@ -6,6 +6,7 @@ import simpledb.common.DeadlockException;
 import simpledb.common.Permissions;
 import simpledb.transaction.TransactionAbortedException;
 import simpledb.transaction.TransactionId;
+import simpledb.LockManager;
 
 import java.io.IOException;
 import java.util.*;
@@ -42,6 +43,8 @@ public class BufferPool {
     final int numPages;   // number of pages -- currently, not enforced
     final ConcurrentMap<PageId, Page> pages; // hash table storing current pages in memory
 
+    private LockManager lm;
+
     /**
      * Creates a BufferPool that caches up to numPages pages.
      *
@@ -50,6 +53,7 @@ public class BufferPool {
     public BufferPool(int numPages) {
         this.numPages = numPages;
         this.pages = new ConcurrentHashMap<>();
+        this.lm = new LockManager();
     }
 
     public static int getPageSize() {
@@ -96,6 +100,13 @@ public class BufferPool {
 
                 p = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
                 pages.put(pid, p);
+
+                if (perm == READ_ONLY) { //acquire a read lock
+                    tm.addSharedLock(pid, tid);
+                }
+                else { //write checks if manager should upgrade or get exclusive lock
+                    tm.write(pid, tid);
+                }
             }
         }
 
@@ -113,6 +124,7 @@ public class BufferPool {
      */
     public void unsafeReleasePage(TransactionId tid, PageId pid) {
         // TODO: some code goes here
+        tm.release(tid, pid);
     }
 
     /**
@@ -122,6 +134,7 @@ public class BufferPool {
      */
     public void transactionComplete(TransactionId tid) {
         // TODO: some code goes here
+        tm.release(tid);
     }
 
     /**
@@ -130,7 +143,7 @@ public class BufferPool {
     public boolean holdsLock(TransactionId tid, PageId p) {
         // TODO: some code goes here
         // not necessary for lab1|lab2
-        return false;
+        return tm.getLockType(tid, p) != null;
     }
 
     /**
