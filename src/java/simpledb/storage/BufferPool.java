@@ -101,11 +101,11 @@ public class BufferPool {
                 p = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
                 pages.put(pid, p);
 
-                if (perm == READ_ONLY) { //acquire a read lock
-                    tm.addSharedLock(pid, tid);
+                if (perm.equals(READ_ONLY)) { //acquire a read lock
+                    lm.addSharedLock(pid, tid);
                 }
                 else { //write checks if manager should upgrade or get exclusive lock
-                    tm.write(pid, tid);
+                    lm.write(pid, tid);
                 }
             }
         }
@@ -124,7 +124,7 @@ public class BufferPool {
      */
     public void unsafeReleasePage(TransactionId tid, PageId pid) {
         // TODO: some code goes here
-        tm.release(tid, pid);
+        lm.release(tid, pid);
     }
 
     /**
@@ -134,7 +134,7 @@ public class BufferPool {
      */
     public void transactionComplete(TransactionId tid) {
         // TODO: some code goes here
-        tm.release(tid);
+        lm.release(tid);
     }
 
     /**
@@ -143,7 +143,7 @@ public class BufferPool {
     public boolean holdsLock(TransactionId tid, PageId p) {
         // TODO: some code goes here
         // not necessary for lab1|lab2
-        return tm.getLockType(tid, p) != null;
+        return lm.getLockType(tid, p) != null;
     }
 
     /**
