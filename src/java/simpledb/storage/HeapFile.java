@@ -150,7 +150,7 @@ public class HeapFile implements DbFile {
                         4,
                         "HeapFile.addTuple: no free slots on page %d of table %d",
                         i, tableid);
-
+                Database.getBufferPool().unsafeReleasePage(tid, pid);
                 // we mistakenly got here through lastEmptyPage, just add a page
                 // XXX we know this isn't very pretty.
                 if (lastEmptyPage != -1) {
@@ -165,8 +165,10 @@ public class HeapFile implements DbFile {
             lastEmptyPage = p.getId().getPageNumber();
             // System.out.println("nfetches = " + nfetches);
             dirtypages.add(p);
+            //throw new DbException("before return");
             return dirtypages;
         }
+
 
         // no empty slots -- append a page
         // This must be synchronized so that the append operation is atomic.
@@ -197,6 +199,7 @@ public class HeapFile implements DbFile {
         // System.out.println("nfetches = " + nfetches);
         dirtypages.add(p);
         return dirtypages;
+
     }
 
     // see DbFile.java for javadocs
@@ -210,6 +213,7 @@ public class HeapFile implements DbFile {
         List<Page> pages = new ArrayList<>();
         pages.add(p);
         return pages;
+
     }
 
     // see DbFile.java for javadocs

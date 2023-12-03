@@ -91,13 +91,19 @@ public class BufferPool {
         // XXX TODO(ghuo): do we really know enough to implement NO STEAL here?
         //     won't we still evict pages?
         Page p;
-        System.out.println(perm);
+        //System.out.println(perm);
         if (perm.equals(Permissions.READ_ONLY)) { //acquire a read lock
-            lm.addSharedLock(pid, tid);
+            try {
+                lm.addSharedLock(pid, tid);
+            }
+            catch (Exception e) {
+                System.out.println(e);
+            }
         }
         else { //write checks if manager should upgrade or get exclusive lock
             lm.write(pid, tid);
         }
+
         synchronized (this) {
             p = pages.get(pid);
             if (p == null) {
@@ -109,7 +115,7 @@ public class BufferPool {
                 pages.put(pid, p);
             }
         }
-
+        //throw new DbException("after synchronization in getPage");
         return p;
     }
 
@@ -153,8 +159,25 @@ public class BufferPool {
      * @param tid    the ID of the transaction requesting the unlock
      * @param commit a flag indicating whether we should commit or abort
      */
-    public void transactionComplete(TransactionId tid, boolean commit) {
+    public synchronized void transactionComplete(TransactionId tid, boolean commit) {
         // TODO: some code goes here
+        if (commit) {
+            try {
+                flushPages(tid);
+            }
+            catch (IOException e) {
+                System.out.println("Flush failed for tid " + tid);
+            }
+        }
+        else {
+            //remove all pages related to the transaction
+            for (PageId pageId : pages.keySet()) {
+                if (pages.get(pageId).isDirty().equals(tid)) {
+                    removePage(pageId);
+                }
+            }
+        }
+        lm.release(tid);
     }
 
     /**
@@ -287,6 +310,11 @@ public class BufferPool {
      */
     public synchronized void flushPages(TransactionId tid) throws IOException {
         // TODO: some code goes here
+        for (PageId pageId : pages.keySet()) {
+            if (pages.get(pageId).isDirty().equals(tid)) {
+                flushPage(pageId);
+            }
+        }
     }
 
     /**
