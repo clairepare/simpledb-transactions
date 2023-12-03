@@ -335,6 +335,7 @@ public class TestUtil {
 
         public void run() {
             try {
+                System.out.println("Transaction " + tid + " is getting a lock on page " + pid + " as " + perm);
                 Database.getBufferPool().getPage(tid, pid, perm);
                 synchronized(alock) {
                     acquired = true;

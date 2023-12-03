@@ -91,6 +91,13 @@ public class BufferPool {
         // XXX TODO(ghuo): do we really know enough to implement NO STEAL here?
         //     won't we still evict pages?
         Page p;
+        System.out.println(perm);
+        if (perm.equals(Permissions.READ_ONLY)) { //acquire a read lock
+            lm.addSharedLock(pid, tid);
+        }
+        else { //write checks if manager should upgrade or get exclusive lock
+            lm.write(pid, tid);
+        }
         synchronized (this) {
             p = pages.get(pid);
             if (p == null) {
@@ -100,13 +107,6 @@ public class BufferPool {
 
                 p = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
                 pages.put(pid, p);
-
-                if (perm.equals(READ_ONLY)) { //acquire a read lock
-                    lm.addSharedLock(pid, tid);
-                }
-                else { //write checks if manager should upgrade or get exclusive lock
-                    lm.write(pid, tid);
-                }
             }
         }
 
