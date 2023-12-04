@@ -140,7 +140,7 @@ public class BufferPool {
      */
     public void transactionComplete(TransactionId tid) {
         // TODO: some code goes here
-        lm.release(tid);
+        transactionComplete(tid, true);
     }
 
     /**
@@ -172,7 +172,7 @@ public class BufferPool {
         else {
             //remove all pages related to the transaction
             for (PageId pageId : pages.keySet()) {
-                if (pages.get(pageId).isDirty().equals(tid)) {
+                if (pages.get(pageId).isDirty() != null && pages.get(pageId).isDirty().equals(tid)) {
                     removePage(pageId);
                 }
             }
@@ -285,6 +285,7 @@ public class BufferPool {
     public synchronized void removePage(PageId pid) {
         Page p = pages.get(pid);
         if (p != null) {
+            lm.release(pid);
             pages.remove(pid);
         }
     }
@@ -302,6 +303,7 @@ public class BufferPool {
 
         DbFile file = Database.getCatalog().getDatabaseFile(pid.getTableId());
         file.writePage(p);
+        lm.release(pid);
         p.markDirty(false, null);
     }
 
@@ -311,7 +313,7 @@ public class BufferPool {
     public synchronized void flushPages(TransactionId tid) throws IOException {
         // TODO: some code goes here
         for (PageId pageId : pages.keySet()) {
-            if (pages.get(pageId).isDirty().equals(tid)) {
+            if (pages.get(pageId).isDirty() != null && pages.get(pageId).isDirty().equals(tid)) {
                 flushPage(pageId);
             }
         }
@@ -346,6 +348,7 @@ public class BufferPool {
             //Assuming we have FORCE, Why do we flush it to disk?
             //Answer: yes we don't need this if we have FORCE, but we do need it if we don't.
             //it doesn't hurt to keep it here.            
+
             flushPage(pid);
         } catch (IOException e) {
             throw new DbException("could not evict page");

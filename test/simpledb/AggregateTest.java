@@ -89,8 +89,8 @@ public class AggregateTest extends SimpleDbTestBase {
   }
 
   /**
-   * Unit test for Aggregate.getTupleDesc()
-   */
+   * Unit test for Aggregate.getTupleDesc()*/
+
   @Test public void getTupleDesc() {
     // Int, Int TupleDesc
     Aggregate op = new Aggregate(scan1, 0, 0,
@@ -109,8 +109,8 @@ public class AggregateTest extends SimpleDbTestBase {
   }
 
   /**
-   * Unit test for Aggregate.rewind()
-   */
+   * Unit test for Aggregate.rewind()*/
+
   @Test public void rewind() throws Exception {
     Aggregate op = new Aggregate(scan1, 1, 0,
         Aggregator.Op.MIN);
@@ -126,8 +126,8 @@ public class AggregateTest extends SimpleDbTestBase {
   }
 
   /**
-   * Unit test for Aggregate.getNext() using a count aggregate with string types
-   */
+   * Unit test for Aggregate.getNext() using a count aggregate with string types*/
+
   @Test public void countStringAggregate() throws Exception {
     Aggregate op = new Aggregate(scan2, 1, 0,
         Aggregator.Op.COUNT);
@@ -137,8 +137,8 @@ public class AggregateTest extends SimpleDbTestBase {
   }
 
   /**
-   * Unit test for Aggregate.getNext() using a count aggregate with string types
-   */
+   * Unit test for Aggregate.getNext() using a count aggregate with string types*/
+
   @Test public void sumStringGroupBy() throws Exception {
     Aggregate op = new Aggregate(scan3, 1, 0,
         Aggregator.Op.SUM);
@@ -148,8 +148,8 @@ public class AggregateTest extends SimpleDbTestBase {
   }
 
   /**
-   * Unit test for Aggregate.getNext() using a sum aggregate
-   */
+   * Unit test for Aggregate.getNext() using a sum aggregate*/
+
   @Test public void sumAggregate() throws Exception {
     Aggregate op = new Aggregate(scan1, 1, 0,
         Aggregator.Op.SUM);
@@ -159,8 +159,8 @@ public class AggregateTest extends SimpleDbTestBase {
   }
 
   /**
-   * Unit test for Aggregate.getNext() using an avg aggregate
-   */
+   * Unit test for Aggregate.getNext() using an avg aggregate*/
+
   @Test public void avgAggregate() throws Exception {
     Aggregate op = new Aggregate(scan1, 1, 0,
        Aggregator.Op.AVG);
@@ -170,8 +170,8 @@ public class AggregateTest extends SimpleDbTestBase {
   }
 
   /**
-   * Unit test for Aggregate.getNext() using a max aggregate
-   */
+   * Unit test for Aggregate.getNext() using a max aggregate*/
+
   @Test public void maxAggregate() throws Exception {
     Aggregate op = new Aggregate(scan1, 1, 0,
         Aggregator.Op.MAX);
@@ -181,8 +181,8 @@ public class AggregateTest extends SimpleDbTestBase {
   }
 
   /**
-   * Unit test for Aggregate.getNext() using a min aggregate
-   */
+   * Unit test for Aggregate.getNext() using a min aggregate*/
+
   @Test public void minAggregate() throws Exception {
     Aggregate op = new Aggregate(scan1, 1, 0,
        Aggregator.Op.MIN);

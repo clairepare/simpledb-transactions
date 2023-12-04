@@ -68,8 +68,8 @@ public class BufferPoolWriteTest extends TestUtil.CreateHeapFile {
     }
 
     /**
-     * Unit test for BufferPool.insertTuple()
-     */
+     * Unit test for BufferPool.insertTuple()*/
+
     @Test public void insertTuple() throws Exception {
         // we should be able to add 504 tuples on an empty page.
         for (int i = 0; i < 504; ++i) {
@@ -89,8 +89,8 @@ public class BufferPoolWriteTest extends TestUtil.CreateHeapFile {
     }
     
     /**
-     * Unit test for BufferPool.deleteTuple()
-     */
+     * Unit test for BufferPool.deleteTuple()*/
+
     @Test public void deleteTuple() throws Exception {
 
     	// heap file should have ~10 pages
