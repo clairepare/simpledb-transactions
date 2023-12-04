@@ -94,11 +94,6 @@ public class DeadlockTest extends TestUtil.CreateHeapFile {
     LockGrabber lg1Write = startGrabber(tid1, p1, Permissions.READ_WRITE);
     LockGrabber lg2Write = startGrabber(tid2, p0, Permissions.READ_WRITE);
 
-    /*if(true){
-      throw new Exception("got to before while");
-    }*/
-
-
     while (true) {
       Thread.sleep(POLL_INTERVAL);
 
@@ -195,9 +190,6 @@ public class DeadlockTest extends TestUtil.CreateHeapFile {
     LockGrabber lg1Write = startGrabber(tid1, p0, Permissions.READ_WRITE);
     LockGrabber lg2Write = startGrabber(tid2, p0, Permissions.READ_WRITE);
 
-    /*if (true) {
-      throw new Exception("stopped before while loop");
-    }*/
     while (true) {
       Thread.sleep(POLL_INTERVAL);
 
