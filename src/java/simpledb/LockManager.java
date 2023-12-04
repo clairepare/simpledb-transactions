@@ -157,36 +157,37 @@ public class LockManager {
             }
         }
         //add to graph
-        System.out.println("add shared lock: first v " + tid);
-        addVertex(tid);
-        if (exLocks.containsKey(pid)) {
-            TransactionId t = exLocks.get(pid);
-            System.out.println("add shared lock: second v " + t);
-            addVertex(t);
-            addEdge(tid, t);
-            printGraphState();
-            while (exLocks.containsKey(pid) /*&& time < TIMEOUT*/) {
-                //System.out.println("waiting");
-                if (cycle()) {
-                    System.out.println("deadlock detected for " + tid);
-                    removeAllEdges(tid);
-                    removeVertex(tid);
-                    //notifyAll();
-                    throw new TransactionAbortedException();
+        synchronized (lock1) {
+            System.out.println("add shared lock: first v " + tid);
+            addVertex(tid);
+            if (exLocks.containsKey(pid)) {
+                TransactionId t = exLocks.get(pid);
+                System.out.println("add shared lock: second v " + t);
+                addVertex(t);
+                addEdge(tid, t);
+                printGraphState();
+                while (exLocks.containsKey(pid) /*&& time < TIMEOUT*/) {
+                    //System.out.println("waiting");
+                    if (cycle()) {
+                        System.out.println("deadlock detected for " + tid);
+                        removeAllEdges(tid);
+                        removeVertex(tid);
+                        //notifyAll();
+                        throw new TransactionAbortedException();
+                    }
+                    try {
+                        Thread.sleep(10);
+                        //time += 10;
+                    }
+                    catch (InterruptedException e) {
+                        System.out.println("sleep interrupted by " + e);
+                    }
                 }
-                try {
-                    Thread.sleep(10);
-                    //time += 10;
-                }
-                catch (InterruptedException e) {
-                    System.out.println("sleep interrupted by " + e);
-                }
+                removeEdge(tid, t);
             }
-            removeEdge(tid, t);
-        }
 
         //if (time >= TIMEOUT) throw new Exception("Timed out waiting for shared lock");
-        synchronized (lock1) {
+
             if (shLocks.containsKey(pid)) {
                 shLocks.get(pid).add(tid);
                 //System.out.println("Transactions with a shared lock on page " + pid + ":\n" + shLocks.get(pid));
@@ -197,6 +198,112 @@ public class LockManager {
                 shLocks.put(pid, temp);
                 //System.out.println("Transactions with a shared lock on page " + pid + ":\n" + shLocks.get(pid));
             }
+        }
+    }
+
+    private void addExclusiveLock(PageId pid, TransactionId tid) throws TransactionAbortedException {
+        // ...
+        System.out.println("add excl lock: first v " + tid);
+        synchronized (lock1) {
+            addVertex(tid);
+
+            boolean shouldCheckDeadlock = false;
+            TransactionId t = exLocks.get(pid);
+            if (t != null) {
+                System.out.println("add excl lock: second v " + t);
+                addVertex(t);
+                addEdge(tid, t);
+                shouldCheckDeadlock = true;
+            }
+
+            if (shLocks.containsKey(pid)) {
+                for (TransactionId sharedTid : shLocks.get(pid)) {
+                    if (!sharedTid.equals(tid)) {
+                        addVertex(sharedTid);
+                        addEdge(tid, sharedTid);
+                        shouldCheckDeadlock = true;
+                    }
+                }
+            }
+
+            printGraphState();
+            while ((exLocks.containsKey(pid) || shLocks.containsKey(pid)) /*&& time < TIMEOUT*/) {
+                if (shouldCheckDeadlock && cycle()) {
+                    System.out.println("deadlock detected for " + tid);
+                    removeAllEdges(tid);
+                    removeVertex(tid);
+                    notifyAll();
+                    throw new TransactionAbortedException();
+                }
+                try {
+                    Thread.sleep(10);
+                    //time += 10;
+                } catch (InterruptedException e) {
+                    System.out.println("sleep interrupted by " + e);
+                }
+            }
+
+            if (shouldCheckDeadlock) {
+                removeEdge(tid, t);
+            }
+
+
+            exLocks.put(pid, tid);
+            //System.out.println("Transaction " + tid + " has acquired an exclusive lock on page " + pid);
+        }
+    }
+
+
+    private void upgradeLock(PageId pid, TransactionId tid) throws TransactionAbortedException {
+        System.out.println("upgrade lock: first v " + tid);
+        synchronized (lock1) {
+            addVertex(tid);
+
+            boolean shouldCheckDeadlock = false;
+            TransactionId t = exLocks.get(pid);
+            if (t != null && !t.equals(tid)) {
+                System.out.println("upgrade lock: second v " + t);
+                addVertex(t);
+                addEdge(tid, t);
+                shouldCheckDeadlock = true;
+            }
+
+            ArrayList<TransactionId> sharedLockHolders = shLocks.get(pid);
+            if (sharedLockHolders != null) {
+                for (TransactionId sharedTid : sharedLockHolders) {
+                    if (!sharedTid.equals(tid)) {
+                        addVertex(sharedTid);
+                        addEdge(tid, sharedTid);
+                        shouldCheckDeadlock = true;
+                    }
+                }
+            }
+
+            printGraphState();
+            while ((exLocks.containsKey(pid) || (sharedLockHolders != null && sharedLockHolders.size() > 1)) /*&& time < TIMEOUT*/) {
+                if (shouldCheckDeadlock && cycle()) {
+                    System.out.println("deadlock detected for " + tid);
+                    removeAllEdges(tid);
+                    removeVertex(tid);
+                    notifyAll();
+                    throw new TransactionAbortedException();
+                }
+                try {
+                    Thread.sleep(10);
+                    //time += 10;
+                } catch (InterruptedException e) {
+                    System.out.println("sleep interrupted by " + e);
+                }
+            }
+
+            if (shouldCheckDeadlock) {
+                removeEdge(tid, t);
+            }
+
+
+            shLocks.remove(pid);
+            exLocks.put(pid, tid);
+            System.out.println("Transaction " + tid + " has upgraded to an exclusive lock on page " + pid);
         }
     }
 
@@ -224,109 +331,6 @@ public class LockManager {
         }
         catch (Exception e) {
             System.out.println(e);
-        }
-    }
-    private void addExclusiveLock(PageId pid, TransactionId tid) throws TransactionAbortedException {
-        // ...
-        System.out.println("add excl lock: first v " + tid);
-        addVertex(tid);
-
-        boolean shouldCheckDeadlock = false;
-        TransactionId t = exLocks.get(pid);
-        if (t != null) {
-            System.out.println("add excl lock: second v " + t);
-            addVertex(t);
-            addEdge(tid, t);
-            shouldCheckDeadlock = true;
-        }
-
-        if (shLocks.containsKey(pid)) {
-            for (TransactionId sharedTid : shLocks.get(pid)) {
-                if (!sharedTid.equals(tid)) {
-                    addVertex(sharedTid);
-                    addEdge(tid, sharedTid);
-                    shouldCheckDeadlock = true;
-                }
-            }
-        }
-
-        printGraphState();
-        while ((exLocks.containsKey(pid) || shLocks.containsKey(pid)) /*&& time < TIMEOUT*/) {
-            if (shouldCheckDeadlock && cycle()) {
-                System.out.println("deadlock detected for " + tid);
-                removeAllEdges(tid);
-                removeVertex(tid);
-                notifyAll();
-                throw new TransactionAbortedException();
-            }
-            try {
-                Thread.sleep(10);
-                //time += 10;
-            } catch (InterruptedException e) {
-                System.out.println("sleep interrupted by " + e);
-            }
-        }
-
-        if (shouldCheckDeadlock) {
-            removeEdge(tid, t);
-        }
-
-        synchronized (lock1) {
-            exLocks.put(pid, tid);
-            //System.out.println("Transaction " + tid + " has acquired an exclusive lock on page " + pid);
-        }
-    }
-
-
-    private void upgradeLock(PageId pid, TransactionId tid) throws TransactionAbortedException {
-        System.out.println("upgrade lock: first v " + tid);
-        addVertex(tid);
-
-        boolean shouldCheckDeadlock = false;
-        TransactionId t = exLocks.get(pid);
-        if (t != null && !t.equals(tid)) {
-            System.out.println("upgrade lock: second v " + t);
-            addVertex(t);
-            addEdge(tid, t);
-            shouldCheckDeadlock = true;
-        }
-
-        ArrayList<TransactionId> sharedLockHolders = shLocks.get(pid);
-        if (sharedLockHolders != null) {
-            for (TransactionId sharedTid : sharedLockHolders) {
-                if (!sharedTid.equals(tid)) {
-                    addVertex(sharedTid);
-                    addEdge(tid, sharedTid);
-                    shouldCheckDeadlock = true;
-                }
-            }
-        }
-
-        printGraphState();
-        while ((exLocks.containsKey(pid) || (sharedLockHolders != null && sharedLockHolders.size() > 1)) /*&& time < TIMEOUT*/) {
-            if (shouldCheckDeadlock && cycle()) {
-                System.out.println("deadlock detected for " + tid);
-                removeAllEdges(tid);
-                removeVertex(tid);
-                notifyAll();
-                throw new TransactionAbortedException();
-            }
-            try {
-                Thread.sleep(10);
-                //time += 10;
-            } catch (InterruptedException e) {
-                System.out.println("sleep interrupted by " + e);
-            }
-        }
-
-        if (shouldCheckDeadlock) {
-            removeEdge(tid, t);
-        }
-
-        synchronized (lock1) {
-            shLocks.remove(pid);
-            exLocks.put(pid, tid);
-            System.out.println("Transaction " + tid + " has upgraded to an exclusive lock on page " + pid);
         }
     }
 
