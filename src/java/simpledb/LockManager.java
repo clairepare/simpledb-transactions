@@ -84,6 +84,14 @@ public class LockManager {
         System.out.println("removing edge for " + v1 + " and " + v2);
     }
 
+    private static void removeAllEdges(TransactionId tid) {
+        Vertex targetVertex = new Vertex(tid);
+        for (ArrayList<Vertex> vertexList : dependencyGraph.values()) {
+            vertexList.remove(targetVertex);
+        }
+        System.out.println("All edges pointing to vertex " + tid + " have been removed.");
+    }
+
     private static boolean cycle() {
         ConcurrentHashMap<Vertex, Boolean> visited = new ConcurrentHashMap<>();
         for (Vertex v : dependencyGraph.keySet()) {
@@ -161,6 +169,9 @@ public class LockManager {
                 //System.out.println("waiting");
                 if (cycle()) {
                     System.out.println("deadlock detected for " + tid);
+                    removeAllEdges(tid);
+                    removeVertex(tid);
+                    //notifyAll();
                     throw new TransactionAbortedException();
                 }
                 try {
@@ -243,6 +254,9 @@ public class LockManager {
         while ((exLocks.containsKey(pid) || shLocks.containsKey(pid)) /*&& time < TIMEOUT*/) {
             if (shouldCheckDeadlock && cycle()) {
                 System.out.println("deadlock detected for " + tid);
+                removeAllEdges(tid);
+                removeVertex(tid);
+                notifyAll();
                 throw new TransactionAbortedException();
             }
             try {
@@ -292,6 +306,9 @@ public class LockManager {
         while ((exLocks.containsKey(pid) || (sharedLockHolders != null && sharedLockHolders.size() > 1)) /*&& time < TIMEOUT*/) {
             if (shouldCheckDeadlock && cycle()) {
                 System.out.println("deadlock detected for " + tid);
+                removeAllEdges(tid);
+                removeVertex(tid);
+                notifyAll();
                 throw new TransactionAbortedException();
             }
             try {
