@@ -176,11 +176,11 @@ public class LockManager {
                         throw new TransactionAbortedException();
                     }
                     try {
-                        Thread.sleep(10);
+                        lock1.wait();
                         //time += 10;
                     }
                     catch (InterruptedException e) {
-                        System.out.println("sleep interrupted by " + e);
+                        System.out.println("wait interrupted by " + e);
                     }
                 }
                 removeEdge(tid, t);
@@ -227,19 +227,19 @@ public class LockManager {
             }
 
             printGraphState();
-            while ((exLocks.containsKey(pid) || shLocks.containsKey(pid)) /*&& time < TIMEOUT*/) {
+            while ((exLocks.containsKey(pid) || shLocks.containsKey(pid))) {
                 if (shouldCheckDeadlock && cycle()) {
                     System.out.println("deadlock detected for " + tid);
                     removeAllEdges(tid);
                     removeVertex(tid);
-                    notifyAll();
+                    lock1.notifyAll();  // Notify all waiting threads
                     throw new TransactionAbortedException();
                 }
                 try {
-                    Thread.sleep(10);
-                    //time += 10;
+                    lock1.wait();  // Wait until notified
                 } catch (InterruptedException e) {
-                    System.out.println("sleep interrupted by " + e);
+                    System.out.println("wait interrupted by " + e);
+                    // Handle interruption appropriately
                 }
             }
 
@@ -285,14 +285,14 @@ public class LockManager {
                     System.out.println("deadlock detected for " + tid);
                     removeAllEdges(tid);
                     removeVertex(tid);
-                    notifyAll();
+                    lock1.notifyAll();
                     throw new TransactionAbortedException();
                 }
                 try {
-                    Thread.sleep(10);
+                    lock1.wait();
                     //time += 10;
                 } catch (InterruptedException e) {
-                    System.out.println("sleep interrupted by " + e);
+                    System.out.println("wait interrupted by " + e);
                 }
             }
 

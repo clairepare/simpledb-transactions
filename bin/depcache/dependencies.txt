@@ -812,7 +812,6 @@ java.lang.System
 simpledb.LockManager
 java.util.ArrayList
 simpledb.transaction.TransactionId
-java.lang.Thread
 java.util.Map
 java.lang.Boolean
 java.lang.String
