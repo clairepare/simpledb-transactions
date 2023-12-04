@@ -104,8 +104,11 @@ public class LockingTest extends TestUtil.CreateHeapFile {
     assertEquals(expected, t.acquired());
 
     // TODO(ghuo): yes, stop() is evil, but this is unit test cleanup
-    //t.stop();
-    t = null;
+    //t.stop()
+    // IDK when this was made but it seems like Thread.stop() has been deprecated for years and is actually
+    // totally unsupported in this version of Java (we get "UnsupportedOperationException" when it's called).
+    // We're using .interrupt() instead, since it seems to be a decent standin that still works
+    t.interrupt();
   }
 
   /**
