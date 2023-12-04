@@ -80,8 +80,8 @@ public class DeadlockTest extends TestUtil.CreateHeapFile {
   /**
    * Not-so-unit test to construct a deadlock situation.
    * t1 acquires p0.read; t2 acquires p1.read; t1 attempts p1.write; t2
-   * attempts p0.write. Rinse and repeat.
-   */
+   * attempts p0.write. Rinse and repeat.*/
+
   @Test public void testReadWriteDeadlock() throws Exception {
     System.out.println("testReadWriteDeadlock constructing deadlock:");
 
@@ -93,6 +93,11 @@ public class DeadlockTest extends TestUtil.CreateHeapFile {
 
     LockGrabber lg1Write = startGrabber(tid1, p1, Permissions.READ_WRITE);
     LockGrabber lg2Write = startGrabber(tid2, p0, Permissions.READ_WRITE);
+
+    /*if(true){
+      throw new Exception("got to before while");
+    }*/
+
 
     while (true) {
       Thread.sleep(POLL_INTERVAL);
@@ -128,8 +133,8 @@ public class DeadlockTest extends TestUtil.CreateHeapFile {
   /**
    * Not-so-unit test to construct a deadlock situation.
    * t1 acquires p0.write; t2 acquires p1.write; t1 attempts p1.write; t2
-   * attempts p0.write.
-   */
+   * attempts p0.write.*/
+
   @Test public void testWriteWriteDeadlock() throws Exception {
     System.out.println("testWriteWriteDeadlock constructing deadlock:");
 
@@ -176,8 +181,8 @@ public class DeadlockTest extends TestUtil.CreateHeapFile {
   /**
    * Not-so-unit test to construct a deadlock situation.
    * t1 acquires p0.read; t2 acquires p0.read; t1 attempts to upgrade to
-   * p0.write; t2 attempts to upgrade to p0.write
-   */
+   * p0.write; t2 attempts to upgrade to p0.write*/
+
   @Test public void testUpgradeWriteDeadlock() throws Exception {
     System.out.println("testUpgradeWriteDeadlock constructing deadlock:");
 
@@ -190,6 +195,9 @@ public class DeadlockTest extends TestUtil.CreateHeapFile {
     LockGrabber lg1Write = startGrabber(tid1, p0, Permissions.READ_WRITE);
     LockGrabber lg2Write = startGrabber(tid2, p0, Permissions.READ_WRITE);
 
+    /*if (true) {
+      throw new Exception("stopped before while loop");
+    }*/
     while (true) {
       Thread.sleep(POLL_INTERVAL);
 
